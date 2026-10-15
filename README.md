@@ -1,6 +1,15 @@
 # Busfahrt nach Köln
 
-Web-App für die Reisebusfahrt Pontremoli → Köln: Restzeit, Ankunftszeit, gefahrene und verbleibende Kilometer, nächster Ort und alle Etappen. Läuft per GPS oder mit manueller Eingabe und funktioniert nach dem ersten Öffnen auch offline.
+Web-App für die Reisebusfahrt Pontremoli → Köln.
+
+**Live:** https://tipau9.github.io/busfahrtkoeln/
+
+- **Fahrt:** Restzeit mit Sekunden, Ankunftszeit, km gefahren/verbleibend, Tempo, Ø-Tempo, Höhe, GPS-Genauigkeit, aktuelles Land mit Bus-Tempolimit, nächste Grenze, Wetter in Köln zur Ankunft und am Standort
+- **Karte:** echte Straßenroute (OpenStreetMap/OSRM), Live-Position des Busses, gefahrene Spur
+- **Fahrer:** zwei Fahrer, Fahrerwechsel, Pausen, Lenkzeit am Stück (4:30) und pro Fahrt (9/10 h), Protokoll
+- **Etappen:** alle Orte mit Kilometer und Durchfahrtszeit, manuelle Eingabe ohne GPS, Einstellungen
+
+Funktioniert nach dem ersten Öffnen auch offline (z. B. im Gotthardtunnel).
 
 ## Auf GitHub Pages veröffentlichen
 

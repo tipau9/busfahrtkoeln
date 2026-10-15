@@ -5,114 +5,33 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Busfahrt nach Köln</title>
 <meta name="theme-color" content="#0f1a24">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800;900&family=Overpass+Mono:wght@500;700&display=swap">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bus Köln">
-<style>
-:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body{margin:0}
-[hidden]{display:none!important}
-</style>
-<style>
-/* Layout: one narrow dashboard column, read at a glance from the co-driver seat; road-sign panels for the next stop. */
-:root{
-  --bg:#eef1f3; --surface:#ffffff; --fg:#13202b; --muted:#5b6b78; --line:#d3dbe1;
-  --accent:#e8a317; --it:#00804a; --ch:#00804a; --de:#1f4fa3; --sign-fg:#ffffff;
-  --warn:#b4540f; --ok:#16794a;
-  --display:"Overpass","Arial Narrow",Arial,sans-serif;
-  --body:"Overpass",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --mono:"Overpass Mono",ui-monospace,Menlo,Consolas,monospace;
-}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0b141c; --surface:#13202b; --fg:#e7edf2; --muted:#8fa1b0; --line:#243544;
-  --accent:#f2b632; --it:#0b7a47; --ch:#0b7a47; --de:#2a5cb8; --warn:#f08c3a; --ok:#3fbf7f; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0b141c; --surface:#13202b; --fg:#e7edf2; --muted:#8fa1b0; --line:#243544;
-  --accent:#f2b632; --it:#0b7a47; --ch:#0b7a47; --de:#2a5cb8; --warn:#f08c3a; --ok:#3fbf7f; color-scheme:dark}
-
-body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
-.wrap{max-width:560px;margin:0 auto;padding-block:20px 40px;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
-  display:flex;flex-direction:column;gap:18px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.route{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.chip{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted);display:inline-flex;align-items:center;gap:6px}
-.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
-.chip.live{color:var(--ok);border-color:currentColor}
-.chip.warn{color:var(--warn);border-color:currentColor}
-
-.hero{display:flex;flex-direction:column;gap:2px}
-.hero .lbl{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-.big{font-family:var(--display);font-weight:900;font-size:clamp(56px,17vw,92px);line-height:.95;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.big small{font-size:.42em;font-weight:800;margin:0 .12em 0 .04em;color:var(--muted)}
-.eta{font-size:18px;font-weight:600}
-.eta b{font-family:var(--mono);font-weight:700;color:var(--accent)}
-.alt{font-size:14px;color:var(--muted)}
-
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
-.stat .v{font-family:var(--mono);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.stat .k{font-size:12px;color:var(--muted)}
-
-.bar{position:relative;height:12px;border-radius:6px;background:var(--line);overflow:hidden}
-.bar i{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:6px;transition:width .6s}
-.barlbl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px}
-
-.sign{border-radius:8px;padding:12px 16px;color:var(--sign-fg);background:var(--de);border:3px solid var(--sign-fg);outline:2px solid var(--de);display:flex;justify-content:space-between;align-items:center;gap:12px}
-.sign.it,.sign.ch{background:var(--it);outline-color:var(--it)}
-.sign .n{font-family:var(--display);font-weight:800;font-size:24px;line-height:1.1}
-.sign .s{font-size:13px;opacity:.9}
-.sign .d{font-family:var(--mono);font-weight:700;font-size:22px;white-space:nowrap}
-
-h2{font-family:var(--display);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:6px 0 0}
-.stops{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:10px}
-.stops li{display:grid;grid-template-columns:10px 1fr auto auto;gap:12px;align-items:center;padding:9px 12px;border-top:1px solid var(--line)}
-.stops li:first-child{border-top:0}
-.stops .dot{width:10px;height:10px;border-radius:50%;background:var(--de)}
-.stops .dot.it,.stops .dot.ch{background:var(--it)}
-.stops .nm{font-weight:600;min-width:0}
-.stops .km{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:right}
-.stops .t{font-family:var(--mono);font-weight:700;text-align:right;min-width:3.2em}
-.stops li.past{opacity:.4}
-
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.row > *{flex:1 1 140px;min-width:0}
-label{font-size:13px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;gap:4px}
-select,input{font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;box-sizing:border-box}
-button{font:inherit;font-weight:700;font-size:15px;border-radius:8px;padding:10px 14px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
-button.primary{background:var(--accent);border-color:var(--accent);color:#1a1405}
-button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.msg{font-size:14px;color:var(--warn)}
-.note{font-size:13px;color:var(--muted)}
-@media (prefers-reduced-motion: reduce){.bar i{transition:none}}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800;900&family=Overpass+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
+<header class="topbar">
+  <span class="route">Pontremoli → Köln</span>
+  <span class="chip" id="chip">Manuell</span>
+</header>
 
-<div class="wrap">
-  <div class="top">
-    <span class="route">Pontremoli → Köln</span>
-    <span class="chip" id="chip">Manuell</span>
-  </div>
-
-  <section class="hero" aria-live="polite">
+<main>
+<!-- ============ FAHRT ============ -->
+<section class="tab" id="tab-fahrt" data-tab="fahrt">
+  <button class="primary gpsbig" id="gpsBtn2" type="button">GPS starten und Fahrt verfolgen</button>
+  <div class="hero" aria-live="polite">
     <span class="lbl">Noch unterwegs</span>
     <div class="big" id="remain">–</div>
     <div class="eta">Ankunft ca. <b id="eta">–</b></div>
     <div class="alt" id="alt"></div>
-  </section>
-
-  <div class="stats">
-    <div class="stat"><div class="v" id="kmLeft">–</div><div class="k">km bis Köln</div></div>
-    <div class="stat"><div class="v" id="kmDone">–</div><div class="k">km gefahren</div></div>
-    <div class="stat"><div class="v" id="speed">–</div><div class="k">Ø live km/h</div></div>
   </div>
 
   <div>
@@ -125,7 +44,92 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
     <div class="d" id="nextKm">–</div>
   </div>
 
-  <h2>Etappen</h2>
+  <div class="grid">
+    <div class="stat"><div class="v" id="kmLeft">–</div><div class="k">km bis Köln</div></div>
+    <div class="stat"><div class="v" id="kmDone">–</div><div class="k">km gefahren</div></div>
+    <div class="stat"><div class="v" id="spdNow">–</div><div class="k">Tempo jetzt km/h</div></div>
+    <div class="stat"><div class="v" id="speed">–</div><div class="k">Ø letzte 30 min</div></div>
+    <div class="stat"><div class="v" id="since">–</div><div class="k">seit Abfahrt</div></div>
+    <div class="stat"><div class="v" id="avgTrip">–</div><div class="k">Ø gesamt km/h</div></div>
+    <div class="stat"><div class="v" id="alti">–</div><div class="k">Höhe m ü. M.</div></div>
+    <div class="stat"><div class="v" id="acc">–</div><div class="k">GPS-Genauigkeit m</div></div>
+    <div class="stat"><div class="v" id="air">–</div><div class="k">Luftlinie km</div></div>
+  </div>
+
+  <div class="panel country" id="countryCard">
+    <div class="flagrow"><span class="cc" id="ccBadge">IT</span><b id="ccName">Italien</b></div>
+    <div id="ccInfo" class="note"></div>
+    <div id="borderInfo" class="borderinfo"></div>
+  </div>
+
+  <div class="panel weather" id="weatherCard">
+    <h3>Wetter in Köln zur Ankunft</h3>
+    <div id="wxKoeln" class="wx">Wird geladen …</div>
+    <h3>Wetter hier</h3>
+    <div id="wxHere" class="wx">Braucht GPS.</div>
+  </div>
+</section>
+
+<!-- ============ KARTE ============ -->
+<section class="tab" id="tab-karte" data-tab="karte" hidden>
+  <div class="mapwrap">
+    <div id="map" role="application" aria-label="Karte der Route"></div>
+    <div class="mapover">
+      <div><b id="mapRemain">–</b><span id="mapKm"></span></div>
+      <button id="followBtn" type="button" class="small">Mitfahren: an</button>
+    </div>
+  </div>
+  <div class="maplegend">
+    <span><i class="lg plan"></i>Route</span>
+    <span><i class="lg done"></i>Gefahren (GPS)</span>
+    <span><i class="lg me"></i>Bus</span>
+  </div>
+</section>
+
+<!-- ============ FAHRER ============ -->
+<section class="tab" id="tab-fahrer" data-tab="fahrer" hidden>
+  <div class="panel">
+    <div class="row">
+      <label for="d1name">Fahrer 1<input id="d1name" type="text" value="Fahrer 1" maxlength="20"></label>
+      <label for="d2name">Fahrer 2<input id="d2name" type="text" value="Fahrer 2" maxlength="20"></label>
+    </div>
+  </div>
+
+  <div class="driver-now panel">
+    <div class="lbl">Am Steuer</div>
+    <div class="dname" id="dNow">–</div>
+    <div class="dstate" id="dState">Noch nicht gestartet</div>
+    <div class="row">
+      <button class="primary" id="dStart" type="button">Fahrt starten</button>
+      <button id="dSwap" type="button">Fahrerwechsel</button>
+      <button id="dPause" type="button">Pause</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Lenkzeit am Stück</h3>
+    <div class="meter"><i id="mCont"></i><span class="tick" style="left:94.4%"></span></div>
+    <div class="mlbl"><span id="contTxt">0:00</span><span>Pause spätestens bei 4:30</span></div>
+    <div class="msg" id="contWarn" hidden></div>
+  </div>
+
+  <div class="panel">
+    <h3>Tageslenkzeit</h3>
+    <div class="dday"><span id="d1lbl">Fahrer 1</span><b id="d1day">0:00</b></div>
+    <div class="meter"><i id="m1"></i><span class="tick" style="left:90%"></span></div>
+    <div class="dday"><span id="d2lbl">Fahrer 2</span><b id="d2day">0:00</b></div>
+    <div class="meter"><i id="m2"></i><span class="tick" style="left:90%"></span></div>
+    <div class="note">Grenze 9:00 h pro Tag, an zwei Tagen pro Woche 10:00 h. Bei zwei Fahrern zählt die Zeit auf dem Beifahrersitz als Pause. Maßgeblich ist immer der Fahrtenschreiber.</div>
+  </div>
+
+  <div class="panel">
+    <h3>Protokoll</h3>
+    <ul class="log" id="dLog"></ul>
+  </div>
+</section>
+
+<!-- ============ ETAPPEN ============ -->
+<section class="tab" id="tab-etappen" data-tab="etappen" hidden>
   <ul class="stops" id="stops"></ul>
 
   <h2>Standort</h2>
@@ -136,250 +140,40 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
     </div>
     <div class="msg" id="gpsMsg" hidden></div>
     <div class="row">
-      <label for="manualWp">Zuletzt passiert
-        <select id="manualWp"></select>
-      </label>
-      <label for="manualPlus">+ km danach
-        <input id="manualPlus" type="number" inputmode="numeric" min="0" step="5" value="0">
-      </label>
+      <label for="manualWp">Zuletzt passiert<select id="manualWp"></select></label>
+      <label for="manualPlus">+ km danach<input id="manualPlus" type="number" inputmode="numeric" min="0" step="5" value="0"></label>
     </div>
-    <button id="resetBtn" type="button">Neue Fahrt starten</button>
-    <div class="note">Ohne GPS: Ort und Kilometer eintragen, die Zeit rechnet sich dann von hier aus weiter.</div>
+    <div class="note">Ohne GPS: Ort und Kilometer eintragen, die Zeit rechnet sich von dort weiter.</div>
   </div>
 
   <h2>Einstellungen</h2>
   <div class="panel">
     <div class="row">
-      <label for="pause">Stopps (Min. pro Fahrstunde)
-        <input id="pause" type="number" inputmode="numeric" min="0" max="30" step="1" value="6">
-      </label>
-      <label for="tempo">Tempo gegenüber Plan (%)
-        <input id="tempo" type="number" inputmode="numeric" min="70" max="120" step="5" value="100">
-      </label>
+      <label for="pause">Stopps (Min. pro Fahrstunde)<input id="pause" type="number" inputmode="numeric" min="0" max="30" step="1" value="6"></label>
+      <label for="tempo">Tempo gegenüber Plan (%)<input id="tempo" type="number" inputmode="numeric" min="70" max="120" step="5" value="100"></label>
+      <label for="vmax">Reisetempo Bus (km/h)<input id="vmax" type="number" inputmode="numeric" min="60" max="100" step="5" value="90"></label>
     </div>
-    <div class="note">Plantempo Reisebus: Autostrada 85 km/h, Apennin 70, Raum Mailand 60, Schweiz 75, Autobahn 85. Bei zwei Fahrern nur kurze Stopps für Tanken und Toilette. Werte sind Schätzungen, Stau ist nicht eingerechnet.</div>
+    <div class="note" id="routeSrc">Route wird geladen …</div>
+    <div class="row">
+      <button id="reloadRoute" type="button">Route neu laden</button>
+      <button id="resetBtn" type="button">Neue Fahrt starten</button>
+    </div>
+    <div class="confirm" id="resetConfirm" hidden>
+      <span>Alles zurücksetzen (Strecke, Lenkzeiten, Protokoll)?</span>
+      <div class="row"><button class="primary" id="resetYes" type="button">Ja, zurücksetzen</button><button id="resetNo" type="button">Abbrechen</button></div>
+    </div>
   </div>
-</div>
+</section>
+</main>
 
-<script>
-(function(){
-  // [Name, lat, lon, Straßen-km ab Pontremoli, Land]
-  const W = [
-    ["Pontremoli",44.375,9.880,0,"it"],
-    ["Passo della Cisa (A15)",44.475,9.960,15,"it"],
-    ["Parma (A1)",44.825,10.250,70,"it"],
-    ["Piacenza",45.050,9.700,135,"it"],
-    ["Lodi",45.310,9.500,170,"it"],
-    ["Mailand",45.480,9.150,200,"it"],
-    ["Chiasso (Grenze)",45.835,9.030,250,"ch"],
-    ["Lugano",46.000,8.950,275,"ch"],
-    ["Bellinzona",46.190,9.020,305,"ch"],
-    ["Airolo (Gotthard)",46.530,8.610,360,"ch"],
-    ["Göschenen",46.665,8.590,378,"ch"],
-    ["Altdorf",46.880,8.640,405,"ch"],
-    ["Luzern",47.050,8.310,445,"ch"],
-    ["Basel (Grenze)",47.560,7.590,540,"de"],
-    ["Freiburg",47.990,7.840,610,"de"],
-    ["Karlsruhe",49.010,8.400,740,"de"],
-    ["Walldorf / Mannheim",49.300,8.640,790,"de"],
-    ["Frankfurt",50.050,8.570,885,"de"],
-    ["Limburg",50.390,8.060,950,"de"],
-    ["Siegburg",50.800,7.200,1040,"de"],
-    ["Köln",50.940,6.960,1075,"de"]
-  ];
-  // Plantempo je Abschnitt (km/h), Abschnitt i = W[i] -> W[i+1]
-  const SPEED = [65,75,85,80,60,75,75,80,70,80,75,80,85,85,85,85,85,85,85,75];
-  const TOTAL = W[W.length-1][3];
-  const $ = id => document.getElementById(id);
+<nav class="tabbar" aria-label="Bereiche">
+  <button type="button" data-go="fahrt" class="on"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 2a7 7 0 0 1 6.9 6H17v2h1.9A7 7 0 0 1 13 18.9V17h-2v1.9A7 7 0 0 1 5.1 13H7v-2H5.1A7 7 0 0 1 11 5.1V7h2V5.1c-.3 0-.7-.1-1-.1Zm3.5 3.5-4.2 2.6a1.5 1.5 0 1 0 1.6 1.6l2.6-4.2Z"/></svg>Fahrt</button>
+  <button type="button" data-go="karte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3 6 2 6-2v16l-6 2-6-2-6 2V5l6-2Zm1 2.4v12.2l4 1.3V6.7l-4-1.3ZM8 5.5 5 6.5v12l3-1V5.5Zm8 1.1v12l3-1v-12l-3 1Z"/></svg>Karte</button>
+  <button type="button" data-go="fahrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2a8 8 0 0 1 7.7 6h-4.3a3.5 3.5 0 0 0-6.8 0H4.3A8 8 0 0 1 12 4Zm0 6.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM4.1 12h4.4l2.5 3v4.9A8 8 0 0 1 4.1 12Zm8.9 7.9V15l2.5-3h4.4a8 8 0 0 1-6.9 7.9Z"/></svg>Fahrer</button>
+  <button type="button" data-go="etappen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm4-11h11v2H9V5Zm0 6h11v2H9v-2Zm0 6h11v2H9v-2Z"/></svg>Etappen</button>
+</nav>
 
-  const store = {
-    get(k,d){ try{ const v = localStorage.getItem("bk_"+k); return v===null? d : JSON.parse(v);}catch(e){ return d; } },
-    set(k,v){ try{ localStorage.setItem("bk_"+k, JSON.stringify(v)); }catch(e){} }
-  };
-
-  let state = { km: store.get("km",0), source:"manual", off:0, hist: store.get("hist",[]) };
-  $("pause").value = store.get("pause",6);
-  $("tempo").value = store.get("tempo",100);
-
-  // Manuelle Auswahl
-  W.forEach((w,i)=>{ const o=document.createElement("option"); o.value=i; o.textContent=w[0]; $("manualWp").appendChild(o); });
-  const mIdx = store.get("mIdx",0), mPlus = store.get("mPlus",0);
-  $("manualWp").value = mIdx; $("manualPlus").value = mPlus;
-
-  function manualKm(){
-    const i = +$("manualWp").value || 0;
-    const plus = Math.max(0, +$("manualPlus").value || 0);
-    return Math.min(TOTAL, W[i][3] + plus);
-  }
-  function onManual(){
-    store.set("mIdx", +$("manualWp").value); store.set("mPlus", +$("manualPlus").value || 0);
-    if(state.source !== "gps"){ state.km = manualKm(); store.set("km", state.km); render(); }
-  }
-  $("manualWp").addEventListener("change", onManual);
-  $("manualPlus").addEventListener("input", onManual);
-  ["pause","tempo"].forEach(id=>$(id).addEventListener("input",()=>{ store.set(id, +$(id).value); render(); }));
-
-  // Position auf die Route projizieren
-  const LAT0 = 47*Math.PI/180;
-  const xy = (lat,lon) => [lon*Math.cos(LAT0)*111.32, lat*110.57];
-  function locate(lat,lon){
-    const p = xy(lat,lon); let best = null;
-    for(let i=0;i<W.length-1;i++){
-      const a = xy(W[i][1],W[i][2]), b = xy(W[i+1][1],W[i+1][2]);
-      const dx=b[0]-a[0], dy=b[1]-a[1], L2=dx*dx+dy*dy;
-      let t = L2 ? ((p[0]-a[0])*dx + (p[1]-a[1])*dy)/L2 : 0; t = Math.max(0,Math.min(1,t));
-      const cx=a[0]+t*dx, cy=a[1]+t*dy, d=Math.hypot(p[0]-cx,p[1]-cy);
-      if(!best || d<best.d) best = {d, km: W[i][3] + t*(W[i+1][3]-W[i][3])};
-    }
-    return best;
-  }
-
-  // Restzeit ab km-Stand berechnen
-  function plan(fromKm){
-    const corr = Math.max(.5, (+$("tempo").value||100)/100);
-    const pause = Math.max(0, +$("pause").value||0);
-    let h = 0; const at = [];
-    for(let i=0;i<W.length-1;i++){
-      const a=W[i][3], b=W[i+1][3];
-      if(b > fromKm){ h += (b - Math.max(a,fromKm)) / (SPEED[i]*corr); }
-      at[i+1] = h*(1+pause/60);
-    }
-    at[0]=0;
-    return { hours: h*(1+pause/60), at };
-  }
-
-  const fmtClock = d => d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
-  function dayTag(d){
-    const now = new Date(); const a = new Date(now.getFullYear(),now.getMonth(),now.getDate());
-    const b = new Date(d.getFullYear(),d.getMonth(),d.getDate());
-    const diff = Math.round((b-a)/864e5);
-    return diff===0 ? "" : diff===1 ? " (morgen)" : " (+"+diff+" Tage)";
-  }
-  function fmtDur(h){
-    const m = Math.max(0, Math.round(h*60)); const hh = Math.floor(m/60), mm = m%60;
-    return {hh, mm};
-  }
-
-  function render(){
-    const km = Math.max(0, Math.min(TOTAL, state.km));
-    const p = plan(km);
-    const d = fmtDur(p.hours);
-    $("remain").innerHTML = km >= TOTAL-2 ? "Da!" : `${d.hh}<small>h</small>${String(d.mm).padStart(2,"0")}<small>min</small>`;
-    const arr = new Date(Date.now() + p.hours*3600e3);
-    $("eta").textContent = km >= TOTAL-2 ? "jetzt" : fmtClock(arr) + " Uhr" + dayTag(arr);
-    $("kmLeft").textContent = Math.round(TOTAL-km);
-    $("kmDone").textContent = Math.round(km);
-    const pct = Math.round(km/TOTAL*100);
-    $("barFill").style.width = pct+"%"; $("pct").textContent = pct+" %";
-
-    // Live-Durchschnitt (mind. 20 Min. GPS-Daten)
-    const h = state.hist;
-    let liveSpd = null;
-    if(h.length>1){
-      const first = h[0], last = h[h.length-1], dt = (last.t-first.t)/3600e3;
-      if(dt >= 1/3 && last.km > first.km) liveSpd = (last.km-first.km)/dt;
-    }
-    $("speed").textContent = liveSpd ? Math.round(liveSpd) : "–";
-    if(liveSpd && km < TOTAL-2){
-      const lh = (TOTAL-km)/liveSpd; const ld = fmtDur(lh); const la = new Date(Date.now()+lh*3600e3);
-      $("alt").textContent = `Mit eurem bisherigen Ø inkl. Stopps: ${ld.hh} h ${String(ld.mm).padStart(2,"0")} min, Ankunft ${fmtClock(la)} Uhr${dayTag(la)}`;
-    } else {
-      $("alt").textContent = state.source==="gps" ? "Live-Ø erscheint nach etwa 20 Minuten Fahrt." : "";
-    }
-
-    // Nächster Ort
-    let next = W.findIndex(w => w[3] > km + 0.5);
-    if(next < 0) next = W.length-1;
-    const nw = W[next];
-    $("sign").className = "sign " + nw[4];
-    $("nextName").textContent = nw[0];
-    $("nextKm").textContent = Math.max(0,Math.round(nw[3]-km)) + " km";
-    const nt = new Date(Date.now() + (p.at[next]||0)*3600e3);
-    $("nextEta").textContent = "ca. " + fmtClock(nt) + " Uhr";
-
-    // Etappenliste
-    const ul = $("stops"); ul.innerHTML = "";
-    W.forEach((w,i)=>{
-      const li = document.createElement("li");
-      const past = w[3] <= km + 0.5 && i>0 || (i===0 && km>0.5);
-      if(past) li.className = "past";
-      const t = past ? "✓" : fmtClock(new Date(Date.now() + (p.at[i]||0)*3600e3));
-      li.innerHTML = `<span class="dot ${w[4]}"></span><span class="nm"></span><span class="km">${w[3]} km</span><span class="t">${t}</span>`;
-      li.querySelector(".nm").textContent = w[0];
-      ul.appendChild(li);
-    });
-
-    const chip = $("chip");
-    if(state.source==="gps"){
-      if(state.off > 25){ chip.className="chip warn"; chip.textContent="GPS · abseits der Route"; }
-      else { chip.className="chip live"; chip.textContent="GPS live"; }
-    } else { chip.className="chip"; chip.textContent="Manuell"; }
-  }
-
-  // GPS
-  let watchId = null;
-  function gpsError(text){
-    const m = $("gpsMsg"); m.hidden = false; m.textContent = text;
-    state.source = "manual"; state.km = manualKm(); render();
-  }
-  function startGps(){
-    if(!("geolocation" in navigator)){ gpsError("Dieses Gerät gibt keinen Standort frei. Trag euren Ort unten von Hand ein."); return; }
-    $("gpsMsg").hidden = true;
-    $("gpsBtn").textContent = "GPS sucht …";
-    if(watchId!==null) navigator.geolocation.clearWatch(watchId);
-    watchId = navigator.geolocation.watchPosition(pos=>{
-      const r = locate(pos.coords.latitude, pos.coords.longitude);
-      state.source = "gps"; state.off = r.d;
-      state.km = r.km;
-      store.set("km", state.km);
-      const now = Date.now();
-      state.hist.push({t:now, km:state.km});
-      state.hist = state.hist.filter(x => now - x.t <= 3*3600e3);
-      store.set("hist", state.hist); store.set("gpsOn", true);
-      $("gpsBtn").textContent = "GPS läuft";
-      render();
-    }, err=>{
-      $("gpsBtn").textContent = "GPS starten";
-      gpsError(err.code===1
-        ? "Standortzugriff abgelehnt. Erlaube den Standort für diese Seite in den Browser-Einstellungen (Schloss-Symbol neben der Adresse) oder trag euren Ort unten ein."
-        : "Kein GPS-Signal. Trag euren Ort unten ein, bis das Signal zurück ist.");
-    }, {enableHighAccuracy:true, maximumAge:30000, timeout:60000});
-  }
-  $("gpsBtn").addEventListener("click", startGps);
-  // GPS automatisch wieder starten, wenn schon erlaubt
-  if(store.get("gpsOn",false) && navigator.permissions){
-    navigator.permissions.query({name:"geolocation"}).then(s=>{ if(s.state==="granted") startGps(); }).catch(()=>{});
-  }
-  // Bildschirmsperre nach Rückkehr neu anfordern
-  document.addEventListener("visibilitychange", async ()=>{
-    if(document.visibilityState==="visible" && wantLock && !lock){
-      try{ lock = await navigator.wakeLock.request("screen"); $("wakeBtn").textContent="Bildschirm bleibt an";
-        lock.addEventListener("release", ()=>{ lock=null; $("wakeBtn").textContent="Bildschirm anlassen"; }); }catch(e){}
-    }
-  });
-
-  // Bildschirm anlassen
-  let lock = null, wantLock = false;
-  $("wakeBtn").addEventListener("click", async ()=>{
-    try{
-      if(lock){ wantLock=false; await lock.release(); lock=null; $("wakeBtn").textContent="Bildschirm anlassen"; return; }
-      lock = await navigator.wakeLock.request("screen"); wantLock = true;
-      $("wakeBtn").textContent = "Bildschirm bleibt an";
-      lock.addEventListener("release", ()=>{ lock=null; $("wakeBtn").textContent="Bildschirm anlassen"; });
-    }catch(e){ $("wakeBtn").textContent = "Nicht möglich"; }
-  });
-
-  $("resetBtn").addEventListener("click", ()=>{
-    state.hist = []; store.set("hist", []); $("manualWp").value = 0; $("manualPlus").value = 0;
-    store.set("mIdx",0); store.set("mPlus",0);
-    if(state.source!=="gps"){ state.km = 0; store.set("km",0); }
-    render();
-  });
-  state.km = manualKm();
-  render();
-  setInterval(render, 30000);
-  if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
-})();
-</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
