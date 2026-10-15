@@ -1,5 +1,5 @@
 // Offline-Speicher: App, Karte und Route funktionieren auch im Funkloch (z. B. im Gotthardtunnel).
-const CACHE = "bus-koeln-v2";
+const CACHE = "bus-koeln-v3";
 const TILES = "bus-koeln-tiles";
 const APP = [
   "./", "./index.html", "./style.css", "./app.js", "./manifest.webmanifest",

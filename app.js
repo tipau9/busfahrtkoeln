@@ -274,7 +274,6 @@ function renderTick(){
   }
   $("mapRemain").textContent = fmtHM(left) + " h";
   if(state.start){ $("since").textContent = fmtHM(Date.now()-state.start); }
-  renderDriver();
 }
 
 function render(){
@@ -335,6 +334,7 @@ function render(){
   } else $("borderInfo").textContent = "Keine Grenze mehr bis Köln.";
 
   renderStops();
+  renderSights();
   renderChip();
   updateBus();
   renderTick();
@@ -563,98 +563,166 @@ function showTab(name){
   document.querySelectorAll(".tab").forEach(s=>s.hidden = s.dataset.tab!==name);
   document.querySelectorAll(".tabbar button").forEach(b=>b.classList.toggle("on", b.dataset.go===name));
   store.set("tab", name);
-  if(name==="karte"){ initMap(); if(map){ setTimeout(()=>{ map.invalidateSize(); updateBus(); }, 60); } }
+  if(name==="karte"){ initMap(); if(map){ updateSightMarkers(); setTimeout(()=>{ map.invalidateSize(); updateBus(); }, 60); } }
   if(name==="fahrt") loadWeatherKoeln();
   window.scrollTo(0,0);
 }
 document.querySelectorAll(".tabbar button").forEach(b=>b.addEventListener("click", ()=>showTab(b.dataset.go)));
 
-/* ---------- Fahrer & Lenkzeit ---------- */
-const D = Object.assign({names:["Fahrer 1","Fahrer 2"], cur:0, status:"idle", since:0, cont:[0,0], day:[0,0], lastEnd:[0,0], log:[]}, store.get("drv", {}));
-const saveD = () => store.set("drv", D);
-$("d1name").value = D.names[0]; $("d2name").value = D.names[1];
-["d1name","d2name"].forEach((id,i)=>$(id).addEventListener("input", ()=>{ D.names[i] = $(id).value.trim() || `Fahrer ${i+1}`; saveD(); renderDriver(); }));
-
-function settle(now){
-  if(D.status==="drive"){ const e = now - D.since; D.cont[D.cur] += e; D.day[D.cur] += e; }
-  D.since = now;
-}
-function addLog(txt){ D.log.unshift({t:Date.now(), txt}); D.log = D.log.slice(0,60); }
-$("dStart").addEventListener("click", ()=>{
-  const now = Date.now();
-  if(D.status==="drive") return;
-  if(D.status==="pause" && now-D.since >= 45*MIN){ D.cont[D.cur] = 0; }
-  if(D.status==="idle" && !state.start){ state.start = now; store.set("start", now); }
-  settle(now); D.status = "drive";
-  addLog(`${D.names[D.cur]} fährt`);
-  saveD(); renderDriver(true);
-});
-$("dSwap").addEventListener("click", ()=>{
-  const now = Date.now();
-  settle(now);
-  if(D.status!=="idle") D.lastEnd[D.cur] = now;
-  const was = D.cur; D.cur = 1-D.cur;
-  if(D.lastEnd[D.cur] && now - D.lastEnd[D.cur] >= 45*MIN) D.cont[D.cur] = 0;
-  if(D.status==="idle"){ addLog(`Startfahrer: ${D.names[D.cur]}`); }
-  else { D.status = "drive"; addLog(`Wechsel: ${D.names[was]} → ${D.names[D.cur]}`); }
-  saveD(); renderDriver(true);
-});
-$("dPause").addEventListener("click", ()=>{
-  const now = Date.now();
-  if(D.status==="drive"){
-    settle(now); D.lastEnd[D.cur] = now; D.status = "pause";
-    addLog(`Pause (${D.names[D.cur]} hat ${fmtHM(D.cont[D.cur])} am Stück)`);
-  } else if(D.status==="pause"){
-    const p = now - D.since;
-    if(p >= 45*MIN){ D.cont = [0,0]; }
-    settle(now); D.status = "drive";
-    addLog(`Pause beendet nach ${fmtHM(p)} h, ${D.names[D.cur]} fährt`);
-  }
-  saveD(); renderDriver(true);
-});
-
-let logStamp = -1;
-function renderDriver(force){
-  const now = Date.now();
-  const live = D.status==="drive" ? now - D.since : 0;
-  const cont = D.cont[D.cur] + live;
-  const day = [D.day[0] + (D.cur===0?live:0), D.day[1] + (D.cur===1?live:0)];
-  $("dNow").textContent = D.names[D.cur];
-  const st = $("dState");
-  if(D.status==="drive"){ st.className = "dstate drive"; st.textContent = `Fährt seit ${fmtClock(D.since)} Uhr`; }
-  else if(D.status==="pause"){ st.className = "dstate pause"; st.textContent = `Pause seit ${fmtHM(now-D.since)} h` + (now-D.since>=45*MIN ? " · gilt als volle Pause" : ` · noch ${fmtHM(45*MIN-(now-D.since))} bis 45 min`); }
-  else { st.className = "dstate"; st.textContent = "Noch nicht gestartet. Mit „Fahrerwechsel“ den Startfahrer wählen."; }
-  $("dStart").disabled = D.status==="drive";
-  $("dStart").textContent = D.status==="pause" ? "Weiterfahren" : "Fahrt starten";
-  $("dPause").disabled = D.status==="idle";
-  $("dPause").textContent = D.status==="pause" ? "Pause beenden" : "Pause";
-
-  const LIM = 4.5*H;
-  const mc = $("mCont"); mc.style.width = Math.min(100, cont/LIM*100)+"%";
-  mc.className = cont >= LIM ? "bad" : cont >= 4.25*H ? "warn" : "";
-  $("contTxt").textContent = fmtHM(cont);
-  const w = $("contWarn");
-  if(D.status==="drive" && cont >= LIM){ w.hidden=false; w.className="msg bad"; w.textContent = `Lenkzeit überschritten. Jetzt wechseln oder 45 Minuten Pause.`; }
-  else if(D.status==="drive" && cont >= 4*H){ w.hidden=false; w.className="msg"; w.textContent = `Noch ${fmtHM(LIM-cont)} bis zur Pflichtpause. Fahrerwechsel planen.`; }
-  else w.hidden = true;
-
-  [0,1].forEach(i=>{
-    $(`d${i+1}lbl`).textContent = D.names[i];
-    $(`d${i+1}day`).textContent = fmtHM(day[i]);
-    const m = $(`m${i+1}`); m.style.width = Math.min(100, day[i]/(10*H)*100)+"%";
-    m.className = day[i] >= 10*H ? "bad" : day[i] >= 9*H ? "warn" : "";
+/* ---------- Unterwegs: Ausblicke & Roaming ---------- */
+// [Titel, lat, lon (Punkt an der Autobahn), Text, Land]
+const SIGHTS = [
+  ["Pontremoli und die Stelen-Statuen",44.378,9.879,"Über der Altstadt thront das Castello del Piagnaro. Darin steht eine Sammlung prähistorischer Stelen-Statuen aus der Lunigiana, einige über 4.000 Jahre alt.","it"],
+  ["Apennin und Cisa-Pass",44.500,9.990,"Die A15 quert hier den Apennin zwischen Toskana und Emilia. Oben liegt der Cisa-Pass (1.041 m), über den auch der alte Pilgerweg Via Francigena nach Rom führt.","it"],
+  ["Der Po",45.075,9.715,"Kurz vor Piacenza geht es über den Po, mit gut 650 km Italiens längster Fluss. Rundherum die flache Po-Ebene, eine der wichtigsten Agrarregionen Europas.","it"],
+  ["Seedamm von Melide",45.955,8.968,"Die Autobahn fährt auf einem Damm mitten über den Luganersee, links und rechts Wasser. Gebaut wurde der Damm Mitte des 19. Jahrhunderts. Darüber ragt der Monte San Salvatore (912 m) auf.","ch"],
+  ["Monte Ceneri",46.140,8.925,"Die Autobahn klettert über den Monte-Ceneri-Pass (554 m). Tief darunter fährt seit 2020 die Bahn durch den 15 km langen Ceneri-Basistunnel.","ch"],
+  ["Die Burgen von Bellinzona",46.193,9.020,"Drei mittelalterliche Burgen bewachen das Tal: Castelgrande, Montebello und Sasso Corbaro. Seit 2000 sind sie UNESCO-Welterbe. Castelgrande sieht man von der Autobahn aus.","ch"],
+  ["Gotthard-Straßentunnel",46.600,8.600,"16,9 km durch den Berg, einer der längsten Straßentunnel der Welt, eröffnet 1980. Bei 80 km/h knapp 13 Minuten ohne Tageslicht. Oben drüber liegt der Gotthardpass auf 2.106 m.","ch"],
+  ["Altdorf, Wilhelm Tells Ort",46.880,8.640,"Im Hauptort von Uri steht das berühmte Tell-Denkmal. Der Sage nach soll Tell hier den Apfel vom Kopf seines Sohnes geschossen haben.","ch"],
+  ["Vierwaldstättersee, Pilatus und Rigi",46.990,8.310,"Bei Hergiswil führt die Autobahn am Vierwaldstättersee entlang. Bei klarer Sicht siehst du den Pilatus (2.128 m) und auf der anderen Seeseite die Rigi (1.798 m).","ch"],
+  ["Basel und der Rhein",47.570,7.600,"Hier macht der Rhein seinen großen Knick nach Norden. Am Dreiländereck treffen sich die Schweiz, Deutschland und Frankreich. Ab jetzt Deutschland.","de"],
+  ["Schwarzwald",47.990,7.800,"Die A5 fährt durch die flache Rheinebene. Rechts (Osten) stehen die Hänge des Schwarzwalds, sein höchster Berg ist der Feldberg (1.493 m). Links, weit hinter dem Rhein, liegen die Vogesen in Frankreich.","de"],
+  ["Karlsruhe",49.010,8.400,"Die Fächerstadt: Die Straßen laufen sternförmig auf das Schloss zu. Hier sitzen das Bundesverfassungsgericht und der Bundesgerichtshof.","de"],
+  ["Frankfurter Flughafen",50.050,8.570,"Am Frankfurter Kreuz liegt Deutschlands größter Flughafen direkt neben der Autobahn. Oft siehst du Flugzeuge tief über die Straße zur Landung gleiten.","de"],
+  ["ICE-Strecke neben der A3",50.430,7.830,"Zwischen Frankfurt und Köln läuft die Schnellfahrstrecke lange direkt neben der Autobahn. Die ICEs fahren hier bis 300 km/h und überholen den Bus mühelos. Bei Montabaur hält der ICE sogar direkt an der A3.","de"],
+  ["Moseltalbrücke Winningen",50.310,7.500,"Die A61 überquert die Mosel auf einer der höchsten Brücken Deutschlands, rund 935 m lang und bis 136 m hoch. Unten liegt das Weindorf Winningen.","de"],
+  ["Siebengebirge",50.670,7.300,"Kurz vor Köln sieht man die Kuppen des Siebengebirges. Auf dem bekanntesten Gipfel, dem Drachenfels, steht eine Burgruine hoch über dem Rhein.","de"],
+  ["Kölner Dom",50.920,7.020,"Schon bei der Einfahrt nach Köln sieht man oft die beiden Türme (157 m). Gebaut wurde von 1248 bis 1880, heute ist der Dom UNESCO-Welterbe. Gleich seid ihr da.","de"]
+];
+let S = [];          // Ausblicke auf der aktuellen Route: {title,text,km,cc,i}
+let sightsVersion = -1;
+function placeSights(){
+  if(!R || sightsVersion===routeVersion) return;
+  sightsVersion = routeVersion;
+  S = [];
+  SIGHTS.forEach((x,i)=>{
+    const p = locate(x[1],x[2]);
+    if(p.d <= 15) S.push({title:x[0], text:x[3], cc:x[4], km:p.km, i});
   });
+  S.sort((a,b)=>a.km-b.km);
+}
 
-  if(force || logStamp !== D.log.length){
-    logStamp = D.log.length;
-    const ul = $("dLog"); ul.innerHTML = "";
-    if(!D.log.length){ const li=document.createElement("li"); li.textContent="Noch keine Einträge."; ul.appendChild(li); }
-    D.log.forEach(e=>{
-      const li = document.createElement("li"), t = document.createElement("time"), s = document.createElement("span");
-      t.textContent = fmtClock(e.t); s.textContent = e.txt; li.append(t, s); ul.appendChild(li);
-    });
+const notified = store.get("notified", {});
+let notifOn = store.get("notifOn", false);
+function canNotify(){ return "Notification" in window && Notification.permission==="granted"; }
+function updateNotifBtn(){
+  const b = $("notifBtn");
+  if(!("Notification" in window)){ b.textContent = notifOn ? "Hinweise: an (nur Vibration)" : "Hinweise einschalten (nur Vibration)"; return; }
+  b.textContent = notifOn ? "Hinweise: an" : "Hinweise aufs Handy schicken";
+  b.className = notifOn ? "primary" : "";
+}
+$("notifBtn").addEventListener("click", async ()=>{
+  if(notifOn){ notifOn = false; store.set("notifOn", false); updateNotifBtn(); return; }
+  if("Notification" in window && Notification.permission==="default"){
+    try{ await Notification.requestPermission(); }catch(e){}
+  }
+  notifOn = true; store.set("notifOn", true); updateNotifBtn();
+  if("Notification" in window && Notification.permission==="denied")
+    $("notifNote").textContent = "Benachrichtigungen sind für diese Seite blockiert. Es gibt nur Vibration und den Hinweis oben auf der Startseite.";
+});
+async function alertOnce(key, title, body){
+  if(notified[key]) return;
+  notified[key] = Date.now(); store.set("notified", notified);
+  if(!notifOn) return;
+  try{ if(navigator.vibrate) navigator.vibrate([200,100,200]); }catch(e){}
+  if(canNotify()){
+    try{
+      const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+      const opt = {body, icon:"icons/icon-192.png", badge:"icons/icon-192.png", tag:key};
+      if(reg) reg.showNotification(title, opt); else new Notification(title, opt);
+    }catch(e){}
   }
 }
+
+function roamStatus(km){
+  const b = R.borderKm, ch = b[0].km, de = b[1].km;
+  if(km < ch - 0.3) return {phase:"before", dist: ch-km};
+  if(km < de - 0.3) return {phase:"in", dist: de-km};
+  return {phase:"after", dist: km-de};
+}
+
+function renderSights(){
+  if(!R) return;
+  placeSights();
+  const km = state.km;
+
+  // Roaming
+  const r = roamStatus(km), st = $("roamState");
+  const chTs = state.computedAt + hoursBetween(km, R.borderKm[0].km)*H;
+  const deTs = state.computedAt + hoursBetween(km, R.borderKm[1].km)*H;
+  if(r.phase==="before"){
+    $("roamTitle").textContent = "Gleich Schweiz: an Roaming denken";
+    $("roamText").textContent = `Schweizer Grenze bei Chiasso in ${fmtKm(r.dist)} km, ca. ${fmtClock(chTs)} Uhr. Bis dahin gilt in Italien Roaming wie zu Hause.`;
+    st.className = r.dist < 40 ? "roamstate warn" : "roamstate";
+    st.textContent = r.dist < 40 ? "Jetzt mobile Daten ausschalten, falls die Schweiz nicht im Tarif ist." : "";
+  } else if(r.phase==="in"){
+    $("roamTitle").textContent = "Du bist in der Schweiz";
+    $("roamText").textContent = `Noch ${fmtKm(r.dist)} km bis Deutschland, ca. ${fmtClock(deTs)} Uhr. Auch kurz hinter Basel kann sich das Handy noch ins Schweizer Netz einbuchen.`;
+    if(navigator.onLine){ st.className = "roamstate bad"; st.textContent = "Dein Handy ist gerade online. Wenn das nicht das Bus-WLAN ist, laufen Roamingkosten."; }
+    else { st.className = "roamstate ok"; st.textContent = "Offline. Keine Roamingkosten, die App läuft trotzdem weiter."; }
+  } else {
+    $("roamTitle").textContent = "Zurück in der EU";
+    $("roamText").textContent = "In Deutschland gilt wieder Roaming wie zu Hause.";
+    st.className = r.dist < 15 ? "roamstate warn" : "roamstate ok";
+    st.textContent = r.dist < 15 ? "Erst nach ein paar Kilometern hinter Basel die Daten wieder einschalten, damit das Handy im deutschen Netz ist." : "Mobile Daten kannst du wieder einschalten.";
+  }
+  if(r.phase==="before" && r.dist < 40) alertOnce("roam-ch","Gleich Schweiz: Roaming!",`Grenze in ${fmtKm(r.dist)} km. Mobile Daten aus, falls die Schweiz nicht im Tarif ist.`);
+  if(r.phase==="after" && r.dist >= 15 && notified["roam-ch"]) alertOnce("roam-de","Zurück in der EU","Du kannst die mobilen Daten wieder einschalten.");
+
+  // Ausblicke
+  const ul = $("sights"); ul.innerHTML = "";
+  let firstAhead = null;
+  S.forEach(x=>{
+    const ahead = x.km - km;
+    const li = document.createElement("li");
+    const now = ahead > -2 && ahead <= 8;
+    const past = ahead <= -2;
+    if(now) li.className = "now"; else if(past) li.className = "past";
+    if(!past && !firstAhead) firstAhead = {...x, ahead};
+    const ts = state.computedAt + hoursBetween(km, x.km)*H;
+    const when = past ? "vorbei" : now ? (ahead <= 0.5 ? "jetzt" : `gleich · ${fmtKm(ahead)} km`) : `${fmtKm(ahead)} km · ${fmtClock(ts)}`;
+    li.innerHTML = `<div class="hd"><b></b><span class="when"></span></div><p></p>`;
+    li.querySelector("b").textContent = x.title;
+    li.querySelector(".when").textContent = when;
+    li.querySelector("p").textContent = x.text;
+    ul.appendChild(li);
+    if(ahead > -1 && ahead <= 5) alertOnce("s"+x.i, "Gleich zu sehen: "+x.title, x.text);
+  });
+  if(!S.length){ const li=document.createElement("li"); li.textContent="Keine Ausblicke auf dieser Route gefunden."; ul.appendChild(li); }
+
+  // Hinweis auf der Startseite
+  const bn = $("banner");
+  const sightNow = firstAhead && firstAhead.ahead <= 3;
+  if(!sightNow && ((r.phase==="before" && r.dist < 40) || r.phase==="in")){
+    bn.hidden = false; bn.className = "banner roam";
+    bn.innerHTML = "<b></b><span></span>";
+    bn.querySelector("b").textContent = r.phase==="in" ? "Schweiz: Roaming beachten" : `Schweizer Grenze in ${fmtKm(r.dist)} km`;
+    bn.querySelector("span").textContent = r.phase==="in" ? (navigator.onLine ? "Handy ist online. Ohne Bus-WLAN fallen Roamingkosten an." : "Offline, alles gut. Die App läuft weiter.") : "Mobile Daten ausschalten, falls die Schweiz nicht im Tarif ist.";
+  } else if(firstAhead && firstAhead.ahead <= 15){
+    bn.hidden = false; bn.className = "banner";
+    bn.innerHTML = "<b></b><span></span>";
+    bn.querySelector("b").textContent = (firstAhead.ahead <= 0.5 ? "Jetzt: " : `In ${fmtKm(firstAhead.ahead)} km: `) + firstAhead.title;
+    bn.querySelector("span").textContent = firstAhead.text;
+  } else bn.hidden = true;
+  updateSightMarkers();
+}
+let sightLayer = null, sightMarkVersion = -1;
+function updateSightMarkers(){
+  if(!map || sightMarkVersion===routeVersion) return;
+  sightMarkVersion = routeVersion;
+  if(sightLayer) sightLayer.remove();
+  sightLayer = L.layerGroup(S.map(x=>{
+    const p = pointAtKm(x.km);
+    const m = L.marker(p, {icon:L.divIcon({className:"", html:'<div class="sightmark"></div>', iconSize:[14,14], iconAnchor:[7,7]})});
+    const div = document.createElement("div"); const b = document.createElement("b"); b.textContent = x.title;
+    div.append(b, document.createElement("br"), x.text); m.bindPopup(div, {maxWidth:260});
+    return m;
+  })).addTo(map);
+}
+window.addEventListener("online", ()=>renderSights());
+window.addEventListener("offline", ()=>renderSights());
+updateNotifBtn();
 
 /* ---------- Neue Fahrt ---------- */
 $("resetBtn").addEventListener("click", ()=>{ $("resetConfirm").hidden = false; });
@@ -663,16 +731,16 @@ $("resetYes").addEventListener("click", ()=>{
   state.hist = []; state.track = []; state.start = null;
   store.set("hist", []); store.set("track", []); store.set("start", null);
   store.set("mName","Pontremoli"); store.set("mPlus",0); $("manualPlus").value = 0;
-  Object.assign(D, {cur:0, status:"idle", since:0, cont:[0,0], day:[0,0], lastEnd:[0,0], log:[]}); saveD();
+  for(const k in notified) delete notified[k]; store.set("notified", {});
   if(trackLine) trackLine.setLatLngs([]);
-  fillManual(); relocate(); renderDriver(true);
+  fillManual(); relocate();
   $("resetConfirm").hidden = true;
 });
 $("reloadRoute").addEventListener("click", ()=>loadRoute(true));
 
 /* ---------- Start ---------- */
 loadRoute(false).then(()=>{ relocate(); loadWeatherKoeln(); });
-showTab(store.get("tab","fahrt"));
+showTab(["fahrt","karte","unterwegs","etappen"].includes(store.get("tab","fahrt")) ? store.get("tab","fahrt") : "fahrt");
 if(store.get("gpsOn",false) && navigator.permissions){
   navigator.permissions.query({name:"geolocation"}).then(s=>{ if(s.state==="granted") startGps(); }).catch(()=>{});
 }

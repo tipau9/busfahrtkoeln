@@ -6,7 +6,7 @@ Web-App für die Reisebusfahrt Pontremoli → Köln.
 
 - **Fahrt:** Restzeit mit Sekunden, Ankunftszeit, km gefahren/verbleibend, Tempo, Ø-Tempo, Höhe, GPS-Genauigkeit, aktuelles Land mit Bus-Tempolimit, nächste Grenze, Wetter in Köln zur Ankunft und am Standort
 - **Karte:** echte Straßenroute (OpenStreetMap/OSRM), Live-Position des Busses, gefahrene Spur
-- **Fahrer:** zwei Fahrer, Fahrerwechsel, Pausen, Lenkzeit am Stück (4:30) und pro Fahrt (9/10 h), Protokoll
+- **Unterwegs:** Was es draußen zu sehen gibt (Luganersee, Gotthard, Schwarzwald, Kölner Dom …) mit Entfernung und Uhrzeit, Roaming-Warnung für die Schweiz, Hinweise per Vibration und Benachrichtigung
 - **Etappen:** alle Orte mit Kilometer und Durchfahrtszeit, manuelle Eingabe ohne GPS, Einstellungen
 
 Funktioniert nach dem ersten Öffnen auch offline (z. B. im Gotthardtunnel).

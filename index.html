@@ -27,6 +27,7 @@
 <!-- ============ FAHRT ============ -->
 <section class="tab" id="tab-fahrt" data-tab="fahrt">
   <button class="primary gpsbig" id="gpsBtn2" type="button">GPS starten und Fahrt verfolgen</button>
+  <div class="banner" id="banner" hidden></div>
   <div class="hero" aria-live="polite">
     <span class="lbl">Noch unterwegs</span>
     <div class="big" id="remain">–</div>
@@ -83,49 +84,28 @@
     <span><i class="lg plan"></i>Route</span>
     <span><i class="lg done"></i>Gefahren (GPS)</span>
     <span><i class="lg me"></i>Bus</span>
+    <span><i class="lg sight"></i>Sehenswert</span>
   </div>
 </section>
 
-<!-- ============ FAHRER ============ -->
-<section class="tab" id="tab-fahrer" data-tab="fahrer" hidden>
+<!-- ============ UNTERWEGS ============ -->
+<section class="tab" id="tab-unterwegs" data-tab="unterwegs" hidden>
+  <div class="panel roam" id="roamCard">
+    <div class="roamhead"><span class="cc ch">CH</span><b id="roamTitle">Roaming Schweiz</b></div>
+    <div id="roamText"></div>
+    <div class="roamstate" id="roamState"></div>
+    <div class="note">Die Schweiz gehört nicht zur EU. Roaming wie zu Hause gilt dort meist nicht, mobile Daten können pro MB teuer werden. Prüf deinen Tarif oder schalte die mobilen Daten zwischen Chiasso und Basel aus. Die App läuft offline weiter, nur Wetter und neue Kartenausschnitte laden dann nicht.</div>
+  </div>
+
   <div class="panel">
     <div class="row">
-      <label for="d1name">Fahrer 1<input id="d1name" type="text" value="Fahrer 1" maxlength="20"></label>
-      <label for="d2name">Fahrer 2<input id="d2name" type="text" value="Fahrer 2" maxlength="20"></label>
+      <button id="notifBtn" type="button">Hinweise aufs Handy schicken</button>
     </div>
+    <div class="note" id="notifNote">Die App meldet sich mit Vibration und Benachrichtigung, kurz bevor ihr an etwas Sehenswertem vorbeikommt und vor der Schweizer Grenze. Die App muss dafür geöffnet bleiben.</div>
   </div>
 
-  <div class="driver-now panel">
-    <div class="lbl">Am Steuer</div>
-    <div class="dname" id="dNow">–</div>
-    <div class="dstate" id="dState">Noch nicht gestartet</div>
-    <div class="row">
-      <button class="primary" id="dStart" type="button">Fahrt starten</button>
-      <button id="dSwap" type="button">Fahrerwechsel</button>
-      <button id="dPause" type="button">Pause</button>
-    </div>
-  </div>
-
-  <div class="panel">
-    <h3>Lenkzeit am Stück</h3>
-    <div class="meter"><i id="mCont"></i><span class="tick" style="left:94.4%"></span></div>
-    <div class="mlbl"><span id="contTxt">0:00</span><span>Pause spätestens bei 4:30</span></div>
-    <div class="msg" id="contWarn" hidden></div>
-  </div>
-
-  <div class="panel">
-    <h3>Tageslenkzeit</h3>
-    <div class="dday"><span id="d1lbl">Fahrer 1</span><b id="d1day">0:00</b></div>
-    <div class="meter"><i id="m1"></i><span class="tick" style="left:90%"></span></div>
-    <div class="dday"><span id="d2lbl">Fahrer 2</span><b id="d2day">0:00</b></div>
-    <div class="meter"><i id="m2"></i><span class="tick" style="left:90%"></span></div>
-    <div class="note">Grenze 9:00 h pro Tag, an zwei Tagen pro Woche 10:00 h. Bei zwei Fahrern zählt die Zeit auf dem Beifahrersitz als Pause. Maßgeblich ist immer der Fahrtenschreiber.</div>
-  </div>
-
-  <div class="panel">
-    <h3>Protokoll</h3>
-    <ul class="log" id="dLog"></ul>
-  </div>
+  <h2>Was gibt's draußen zu sehen</h2>
+  <ul class="sights" id="sights"></ul>
 </section>
 
 <!-- ============ ETAPPEN ============ -->
@@ -169,7 +149,7 @@
 <nav class="tabbar" aria-label="Bereiche">
   <button type="button" data-go="fahrt" class="on"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 2a7 7 0 0 1 6.9 6H17v2h1.9A7 7 0 0 1 13 18.9V17h-2v1.9A7 7 0 0 1 5.1 13H7v-2H5.1A7 7 0 0 1 11 5.1V7h2V5.1c-.3 0-.7-.1-1-.1Zm3.5 3.5-4.2 2.6a1.5 1.5 0 1 0 1.6 1.6l2.6-4.2Z"/></svg>Fahrt</button>
   <button type="button" data-go="karte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3 6 2 6-2v16l-6 2-6-2-6 2V5l6-2Zm1 2.4v12.2l4 1.3V6.7l-4-1.3ZM8 5.5 5 6.5v12l3-1V5.5Zm8 1.1v12l3-1v-12l-3 1Z"/></svg>Karte</button>
-  <button type="button" data-go="fahrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2a8 8 0 0 1 7.7 6h-4.3a3.5 3.5 0 0 0-6.8 0H4.3A8 8 0 0 1 12 4Zm0 6.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM4.1 12h4.4l2.5 3v4.9A8 8 0 0 1 4.1 12Zm8.9 7.9V15l2.5-3h4.4a8 8 0 0 1-6.9 7.9Z"/></svg>Fahrer</button>
+  <button type="button" data-go="unterwegs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5C6.5 5 2.7 9.4 1.5 12c1.2 2.6 5 7 10.5 7s9.3-4.4 10.5-7C21.3 9.4 17.5 5 12 5Zm0 12c-3.8 0-6.7-2.8-8.2-5C5.3 9.8 8.2 7 12 7s6.7 2.8 8.2 5c-1.5 2.2-4.4 5-8.2 5Zm0-8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/></svg>Unterwegs</button>
   <button type="button" data-go="etappen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm4-11h11v2H9V5Zm0 6h11v2H9v-2Zm0 6h11v2H9v-2Z"/></svg>Etappen</button>
 </nav>
 
