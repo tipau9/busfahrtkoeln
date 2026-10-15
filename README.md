@@ -1,6 +1,6 @@
 # Busfahrt nach Köln
 
-Web-App für die Reisebusfahrt Pontremoli → Köln.
+Web-App für die Reisebusfahrt nach Köln. Start ist der Standort beim ersten GPS-Signal, ohne GPS Marina di Bibbona.
 
 **Live:** https://tipau9.github.io/busfahrtkoeln/
 

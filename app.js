@@ -9,37 +9,48 @@ const store = {
 };
 const H = 3600e3, MIN = 60e3;
 const DEST = [50.9375, 6.9603];
+const BIBBONA = {lat:43.243, lon:10.528, name:"Marina di Bibbona", auto:true};
+let tripStart = store.get("tripStart", null) || {...BIBBONA};
+const startKey = () => tripStart.lat.toFixed(3)+","+tripStart.lon.toFixed(3);
 
 /* ---------- Orte entlang der Strecke ----------
    [Name, lat, lon, Plan-km (Näherung), Land, Hinweis, nurAlternative] */
 const W = [
-  ["Pontremoli",44.375,9.880,0,"it","Start"],
-  ["Passo della Cisa",44.475,9.960,15,"it","A15, Tunnel unter dem Apennin"],
-  ["Parma",44.825,10.250,70,"it","A15 → A1"],
-  ["Piacenza",45.050,9.700,135,"it","A1"],
-  ["Lodi",45.310,9.500,170,"it","A1"],
-  ["Mailand",45.480,9.150,200,"it","Tangenziale, viel Verkehr"],
-  ["Como / Chiasso",45.835,9.030,250,"ch","Grenze Italien – Schweiz"],
-  ["Lugano",46.000,8.950,275,"ch","A2"],
-  ["Bellinzona",46.190,9.020,305,"ch","A2"],
-  ["Airolo",46.530,8.610,360,"ch","Gotthard-Südportal"],
-  ["Göschenen",46.665,8.590,378,"ch","Gotthard-Nordportal"],
-  ["Altdorf",46.880,8.640,405,"ch","A2"],
-  ["Luzern",47.050,8.310,445,"ch","A2"],
-  ["Basel",47.560,7.590,540,"de","Grenze Schweiz – Deutschland"],
-  ["Freiburg",47.990,7.840,610,"de","A5"],
-  ["Karlsruhe",49.010,8.400,740,"de","A5"],
-  ["Walldorf",49.300,8.640,790,"de","A5 / A6"],
-  ["Frankfurt",50.050,8.570,885,"de","Frankfurter Kreuz, A3"],
-  ["Limburg",50.390,8.060,950,"de","A3"],
-  ["Siegburg",50.800,7.200,1040,"de","A3"],
+  ["Marina di Bibbona",43.243,10.528,0,"it","Toskanische Küste"],
+  ["Cecina",43.310,10.520,12,"it","Via Aurelia"],
+  ["Livorno",43.530,10.360,50,"it","Via Aurelia / A12"],
+  ["Pisa",43.720,10.420,72,"it","A12"],
+  ["Viareggio",43.870,10.280,95,"it","A12, Versilia"],
+  ["Massa / Carrara",44.030,10.120,120,"it","A12, Marmorberge"],
+  ["Sarzana",44.110,9.960,140,"it","A12 → A15"],
+  ["Aulla",44.210,9.970,158,"it","A15, Lunigiana"],
+  ["Pontremoli",44.375,9.880,180,"it","A15 Richtung Parma"],
+  ["Passo della Cisa",44.475,9.960,195,"it","A15, Tunnel unter dem Apennin"],
+  ["Parma",44.825,10.250,250,"it","A15 → A1"],
+  ["Piacenza",45.050,9.700,315,"it","A1"],
+  ["Lodi",45.310,9.500,350,"it","A1"],
+  ["Mailand",45.480,9.150,380,"it","Tangenziale, viel Verkehr"],
+  ["Como / Chiasso",45.835,9.030,430,"ch","Grenze Italien – Schweiz"],
+  ["Lugano",46.000,8.950,455,"ch","A2"],
+  ["Bellinzona",46.190,9.020,485,"ch","A2"],
+  ["Airolo",46.530,8.610,540,"ch","Gotthard-Südportal"],
+  ["Göschenen",46.665,8.590,558,"ch","Gotthard-Nordportal"],
+  ["Altdorf",46.880,8.640,585,"ch","A2"],
+  ["Luzern",47.050,8.310,625,"ch","A2"],
+  ["Basel",47.560,7.590,720,"de","Grenze Schweiz – Deutschland"],
+  ["Freiburg",47.990,7.840,790,"de","A5"],
+  ["Karlsruhe",49.010,8.400,920,"de","A5"],
+  ["Walldorf",49.300,8.640,970,"de","A5 / A6"],
+  ["Frankfurt",50.050,8.570,1065,"de","Frankfurter Kreuz, A3"],
+  ["Limburg",50.390,8.060,1130,"de","A3"],
+  ["Siegburg",50.800,7.200,1220,"de","A3"],
   ["Ludwigshafen",49.480,8.390,null,"de","A61",true],
   ["Bingen",49.950,7.900,null,"de","A61",true],
   ["Koblenz",50.360,7.550,null,"de","A61, Moseltal",true],
   ["Meckenheim",50.620,7.030,null,"de","A61 / A565",true],
-  ["Köln",50.940,6.960,1075,"de","Ziel"]
+  ["Köln",50.940,6.960,1255,"de","Ziel"]
 ];
-const PLAN_SPEED = [65,75,85,80,60,75,75,80,70,80,75,80,85,85,85,85,85,85,85,75];
+const PLAN_SPEED = [70,85,80,85,85,85,75,75,65,75,85,80,60,75,75,80,70,80,75,80,85,85,85,85,85,85,85,75];
 const BORDERS = [
   {lat:45.835, lon:9.026, to:"ch", name:"Grenze Italien → Schweiz",
    tip:"Zoll Chiasso/Brogeda. Für ausländische Reisebusse ist in der Schweiz die Schwerverkehrsabgabe (PSVA) fällig."},
@@ -63,7 +74,7 @@ function hav(a1,o1,a2,o2){
 let R = null;          // {pts, segKm, segV, cumKm, cumH, px, py, src, stops, borderKm}
 let routeVersion = 0;
 
-function finishRoute(pts, segV, src){
+function finishRoute(pts, segV, src, planKm){
   const n = pts.length, segKm = new Array(n-1), cumKm = new Float64Array(n);
   const px = new Float64Array(n), py = new Float64Array(n);
   for(let i=0;i<n;i++){
@@ -75,10 +86,9 @@ function finishRoute(pts, segV, src){
     cumKm[i+1] = cumKm[i] + segKm[i];
   }
   R = {pts, segKm, segV, cumKm, cumH:new Float64Array(n), px, py, src};
-  if(src === "plan"){ // Plan-km aus der Tabelle verwenden
-    const plan = W.filter(w=>!w[6]);
-    for(let i=0;i<n;i++) R.cumKm[i] = plan[i][3];
-    for(let i=0;i<n-1;i++) R.segKm[i] = plan[i+1][3]-plan[i][3];
+  if(planKm){ // Plan-km aus der Tabelle verwenden
+    for(let i=0;i<n;i++) R.cumKm[i] = planKm[i];
+    for(let i=0;i<n-1;i++) R.segKm[i] = planKm[i+1]-planKm[i];
   }
   recomputeTime();
   // Orte auf die Route legen
@@ -88,8 +98,11 @@ function finishRoute(pts, segV, src){
     const p = locate(w[1],w[2]);
     if(p.d <= 12) stops.push({name:w[0], km:p.km, cc:w[4], note:w[5]});
   });
-  stops.sort((a,b)=>a.km-b.km);
-  stops[0].km = 0; stops[stops.length-1].km = R.cumKm[n-1];
+  const total = R.cumKm[n-1];
+  const mid = stops.filter(x=>x.km > 3 && x.km < total-3 && x.name!=="Köln").sort((a,b)=>a.km-b.km);
+  const startCc = tripStart.lat > 47.58 ? "de" : (tripStart.lat > 45.84 && tripStart.lon < 9.3 ? "ch" : "it");
+  stops.length = 0;
+  stops.push({name:tripStart.name, km:0, cc:startCc, note:"Start"}, ...mid, {name:"Köln", km:total, cc:"de", note:"Ziel"});
   R.stops = stops;
   R.borderKm = BORDERS.map(b=>({...b, km: locate(b.lat,b.lon).km}));
   routeVersion++;
@@ -110,7 +123,23 @@ function recomputeTime(){
 
 function buildPlanRoute(){
   const plan = W.filter(w=>!w[6]);
-  finishRoute(plan.map(w=>[w[1],w[2]]), PLAN_SPEED.slice(), "plan");
+  let pts = plan.map(w=>[w[1],w[2]]), km = plan.map(w=>w[3]), sp = PLAN_SPEED.slice();
+  // Startort auf die Plan-Strecke legen und alles davor abschneiden
+  let best = {d:Infinity,i:0,t:0};
+  for(let i=0;i<pts.length-1;i++){
+    const a=pts[i], b=pts[i+1], c=Math.cos(tripStart.lat*Math.PI/180);
+    const ax=a[1]*c*111.32, ay=a[0]*110.57, dx=b[1]*c*111.32-ax, dy=b[0]*110.57-ay;
+    const x=tripStart.lon*c*111.32, y=tripStart.lat*110.57, L2=dx*dx+dy*dy;
+    let t=L2?((x-ax)*dx+(y-ay)*dy)/L2:0; t=Math.max(0,Math.min(1,t));
+    const d=Math.hypot(ax+t*dx-x, ay+t*dy-y);
+    if(d<best.d) best={d,i,t};
+  }
+  const i = best.i, k0 = km[i] + best.t*(km[i+1]-km[i]);
+  const extra = best.d > 1 ? best.d*1.3 : 0;
+  const nPts = [[tripStart.lat,tripStart.lon]].concat(pts.slice(i+1));
+  const nKm = [0].concat(km.slice(i+1).map(v=>v-k0+extra));
+  const nSp = [sp[i]].concat(sp.slice(i+1));
+  finishRoute(nPts, nSp, "plan", nKm);
 }
 
 function buildOsrmRoute(data){
@@ -118,7 +147,11 @@ function buildOsrmRoute(data){
 }
 
 async function fetchOsrm(){
-  const vias = [[44.3757,9.8797],[46.0167,8.9339],[47.5920,7.6060],DEST];
+  const key = startKey();
+  const vias = [[tripStart.lat,tripStart.lon]];
+  if(tripStart.lat < 45.9) vias.push([46.0167,8.9339]);   // über Lugano / Gotthard
+  if(tripStart.lat < 47.5) vias.push([47.5920,7.6060]);   // über Basel
+  vias.push(DEST);
   const url = "https://router.project-osrm.org/route/v1/driving/" +
     vias.map(v=>v[1]+","+v[0]).join(";") +
     "?overview=full&geometries=geojson&annotations=distance,duration";
@@ -145,26 +178,26 @@ async function fetchOsrm(){
     }
     last = c;
   }
-  const data = {pts, seg, at: Date.now(), km: j.routes[0].distance/1000};
+  const data = {pts, seg, at: Date.now(), km: j.routes[0].distance/1000, key};
   store.set("route", data);
   return data;
 }
 
 async function loadRoute(force){
-  const cached = store.get("route", null);
+  let cached = store.get("route", null);
+  if(cached && cached.key !== startKey()) cached = null;
   if(cached && cached.pts && !force){
     buildOsrmRoute(cached);
-  } else if(!R){
+  } else {
     buildPlanRoute();
   }
   updateRouteNote();
   if(!cached || force){
     $("routeSrc").textContent = "Echte Straßenroute wird geladen …";
     try{
-      buildOsrmRoute(await fetchOsrm());
-    }catch(e){
-      if(!R) buildPlanRoute();
-    }
+      const data = await fetchOsrm();
+      if(data.key === startKey()) buildOsrmRoute(data);
+    }catch(e){}
     updateRouteNote();
     relocate();
     drawRoute();
@@ -174,9 +207,10 @@ async function loadRoute(force){
 function updateRouteNote(){
   if(!R) return;
   const km = R.cumKm[R.cumKm.length-1], h = R.cumH[R.cumH.length-1];
-  $("routeSrc").textContent = R.src === "osrm"
+  $("routeSrc").textContent = `Start: ${tripStart.name}. ` + (R.src === "osrm"
     ? `Route aus echten Straßendaten (OpenStreetMap): ${fmtKm(km)} km, reine Fahrzeit Bus ca. ${fmtHM(h*H)} h ohne Stopps.`
-    : `Keine Verbindung zum Routenserver. Näherung über ${R.pts.length} Wegpunkte: ${fmtKm(km)} km, ca. ${fmtHM(h*H)} h ohne Stopps.`;
+    : `Keine Verbindung zum Routenserver. Näherung über ${R.pts.length} Wegpunkte: ${fmtKm(km)} km, ca. ${fmtHM(h*H)} h ohne Stopps.`);
+  $("barStart").textContent = tripStart.name;
 }
 
 /* Position auf die Route projizieren */
@@ -379,7 +413,7 @@ function renderChip(){
 
 /* ---------- Manuelle Eingabe ---------- */
 function fillManual(){
-  const sel = $("manualWp"), keep = store.get("mName", "Pontremoli");
+  const sel = $("manualWp"), keep = store.get("mName", tripStart.name);
   sel.innerHTML = "";
   R.stops.forEach((s,i)=>{ const o=document.createElement("option"); o.value=i; o.textContent=`${s.name} (${Math.round(s.km)} km)`; if(s.name===keep) o.selected=true; sel.appendChild(o); });
 }
@@ -412,6 +446,29 @@ function relocate(){
   } else state.km = manualKm();
   render();
 }
+/* Startort = aktueller Standort */
+function setStartHere(lat, lon){
+  tripStart = {lat:+lat.toFixed(4), lon:+lon.toFixed(4), name:"Dein Standort", auto:false};
+  store.set("tripStart", tripStart);
+  store.set("mName", tripStart.name);
+  state.track = []; store.set("track", []); if(trackLine) trackLine.setLatLngs([]);
+  loadRoute(false).then(relocate);
+  relocate();
+  nameStart();
+}
+async function nameStart(){
+  try{
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=12&accept-language=de&lat=${tripStart.lat}&lon=${tripStart.lon}`);
+    const j = await r.json(), a = j.address || {};
+    const n = a.city || a.town || a.village || a.hamlet || a.suburb || a.municipality || a.county;
+    if(n){
+      tripStart.name = n; store.set("tripStart", tripStart); store.set("mName", n);
+      if(R && R.stops && R.stops[0]) R.stops[0].name = n;
+      fillManual(); updateRouteNote(); render();
+    }
+  }catch(e){}
+}
+
 function onPos(pos){
   const c = pos.coords, now = Date.now();
   let spd = c.speed!=null && c.speed>=0 ? c.speed*3.6 : null;
@@ -423,6 +480,7 @@ function onPos(pos){
   const p = locate(c.latitude, c.longitude);
   state.km = p.km; state.off = p.d;
   if(!state.start){ state.start = now; store.set("start", now); }
+  if(tripStart.auto){ setStartHere(c.latitude, c.longitude); return; }
   // Verlauf
   state.hist.push({t:now, km:+state.km.toFixed(3)});
   state.hist = state.hist.filter(x => now-x.t <= 3*H);
@@ -572,6 +630,7 @@ document.querySelectorAll(".tabbar button").forEach(b=>b.addEventListener("click
 /* ---------- Unterwegs: Ausblicke & Roaming ---------- */
 // [Titel, lat, lon (Punkt an der Autobahn), Text, Land]
 const SIGHTS = [
+  ["Die Marmorberge von Carrara",44.060,10.060,"Rechts über der Küstenautobahn leuchten die Apuanischen Alpen weiß, als läge Schnee. Das ist Marmor: Aus diesen Brüchen stammt seit der Römerzeit der berühmte Carrara-Marmor, auch Michelangelo holte seinen Stein hier.","it"],
   ["Pontremoli und die Stelen-Statuen",44.378,9.879,"Über der Altstadt thront das Castello del Piagnaro. Darin steht eine Sammlung prähistorischer Stelen-Statuen aus der Lunigiana, einige über 4.000 Jahre alt.","it"],
   ["Apennin und Cisa-Pass",44.500,9.990,"Die A15 quert hier den Apennin zwischen Toskana und Emilia. Oben liegt der Cisa-Pass (1.041 m), über den auch der alte Pilgerweg Via Francigena nach Rom führt.","it"],
   ["Der Po",45.075,9.715,"Kurz vor Piacenza geht es über den Po, mit gut 650 km Italiens längster Fluss. Rundherum die flache Po-Ebene, eine der wichtigsten Agrarregionen Europas.","it"],
@@ -730,7 +789,9 @@ $("resetNo").addEventListener("click", ()=>{ $("resetConfirm").hidden = true; })
 $("resetYes").addEventListener("click", ()=>{
   state.hist = []; state.track = []; state.start = null;
   store.set("hist", []); store.set("track", []); store.set("start", null);
-  store.set("mName","Pontremoli"); store.set("mPlus",0); $("manualPlus").value = 0;
+  if(state.fix && state.source==="gps"){ setStartHere(state.fix.lat, state.fix.lon); }
+  else { tripStart = {...BIBBONA}; store.set("tripStart", null); store.set("route", null); loadRoute(false).then(relocate); }
+  store.set("mName", tripStart.name); store.set("mPlus",0); $("manualPlus").value = 0;
   for(const k in notified) delete notified[k]; store.set("notified", {});
   if(trackLine) trackLine.setLatLngs([]);
   fillManual(); relocate();
