@@ -1,0 +1,26 @@
+# Busfahrt nach Köln
+
+Web-App für die Reisebusfahrt Pontremoli → Köln: Restzeit, Ankunftszeit, gefahrene und verbleibende Kilometer, nächster Ort und alle Etappen. Läuft per GPS oder mit manueller Eingabe und funktioniert nach dem ersten Öffnen auch offline.
+
+## Auf GitHub Pages veröffentlichen
+
+1. Auf github.com ein neues **öffentliches** Repository anlegen, z. B. `busfahrtkoeln`.
+2. **Add file → Upload files** und alle Dateien aus diesem Ordner hochladen (inklusive Ordner `icons`). Dann **Commit changes**.
+3. **Settings → Pages**: unter *Source* „Deploy from a branch“, Branch `main`, Ordner `/ (root)`, **Save**.
+4. Nach 1–2 Minuten ist die App erreichbar unter
+   `https://tipau9.github.io/busfahrtkoeln/`
+
+## Aufs Handy installieren
+
+- **Android (Chrome):** Link öffnen → Menü ⋮ → **App installieren** bzw. **Zum Startbildschirm hinzufügen**.
+- **iPhone (Safari):** Link öffnen → Teilen-Symbol → **Zum Home-Bildschirm**.
+
+Beim ersten Tippen auf **GPS starten** den Standort erlauben. Danach startet GPS beim Öffnen automatisch.
+
+## Als APK
+
+Den GitHub-Pages-Link auf pwabuilder.com eingeben → **Package for stores → Android** → APK herunterladen.
+
+## Anpassen
+
+Route, Kilometer und Plantempo stehen in `index.html` oben im Skript (`W` und `SPEED`).
